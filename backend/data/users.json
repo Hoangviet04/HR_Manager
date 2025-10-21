@@ -1,0 +1,23 @@
+[
+    {
+        "id": 1,
+        "username": "admin",
+        "password": "$2b$12$vh/4QlQk/MWnNxDQ0Eu7y.PphVqdWO5QQi2jTY.wS4eFx9bbHEgta",
+        "role": "HR",
+        "nhanVienId": 3
+    },
+    {
+        "id": 2,
+        "username": "employee1",
+        "password": "$2b$12$rYw0HvlXVZ2J/kuUtFniI.ZqNk25c1SRPxjtbL33MjQwMjZwd8W62",
+        "role": "EMP",
+        "nhanVienId": 1
+    },
+    {
+        "id": 3,
+        "username": "employee2",
+        "password": "$2b$12$2HJ6juK0JjXMpT7lwdlosuqnBVCGurW24MIsIlBZWBIznQMy.SGW2",
+        "role": "EMP",
+        "nhanVienId": 2
+    }
+]

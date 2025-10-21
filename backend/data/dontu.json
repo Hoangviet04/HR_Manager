@@ -1,0 +1,29 @@
+[
+    {
+        "id": 1,
+        "nhanVienId": 1,
+        "loai": "Nghỉ phép",
+        "tuNgay": "2025-10-15",
+        "denNgay": "2025-10-20",
+        "lyDo": "Du lịch",
+        "trangThai": "Chờ duyệt"
+    },
+    {
+        "id": 2,
+        "nhanVienId": 2,
+        "loai": "Công tác",
+        "tuNgay": "2025-09-10",
+        "denNgay": "2025-09-12",
+        "lyDo": "Đi hội thảo",
+        "trangThai": "Đã duyệt"
+    },
+    {
+        "id": 3,
+        "nhanVienId": 1,
+        "loai": "Nghỉ phép",
+        "tuNgay": "2025-08-01",
+        "denNgay": "2025-08-05",
+        "lyDo": "Việc gia đình",
+        "trangThai": "Từ chối"
+    }
+]

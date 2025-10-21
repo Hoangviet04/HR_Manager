@@ -1,0 +1,41 @@
+[
+    {
+        "id": 1,
+        "hoTen": "Nguyễn Văn A",
+        "gioiTinh": "Nam",
+        "ngaySinh": "1990-01-15",
+        "diaChi": "Hà Nội",
+        "soDienThoai": "0123456789",
+        "email": "a@example.com",
+        "phongBanId": 2,
+        "chucVu": "Nhân viên",
+        "ngayVaoLam": "2020-06-01",
+        "luongCoBan": 5000000
+    },
+    {
+        "id": 2,
+        "hoTen": "Trần Thị B",
+        "gioiTinh": "Nữ",
+        "ngaySinh": "1992-09-01",
+        "diaChi": "Hồ Chí Minh",
+        "soDienThoai": "0987654321",
+        "email": "b@example.com",
+        "phongBanId": 3,
+        "chucVu": "Nhân viên",
+        "ngayVaoLam": "2021-03-15",
+        "luongCoBan": 6000000
+    },
+    {
+        "id": 3,
+        "hoTen": "Lê Thị HR",
+        "gioiTinh": "Nữ",
+        "ngaySinh": "1985-07-20",
+        "diaChi": "Hà Nội",
+        "soDienThoai": "0112233445",
+        "email": "hr@example.com",
+        "phongBanId": 1,
+        "chucVu": "Trưởng phòng",
+        "ngayVaoLam": "2010-01-01",
+        "luongCoBan": 10000000
+    }
+]
