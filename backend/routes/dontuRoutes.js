@@ -1,81 +1,59 @@
-/* maychu/routes/dontuRoutes.js */
 const express = require('express');
 const router = express.Router();
-const db = require('../data/db');
+const db = require('../config/db');
 const { verifyToken, requireHR } = require('../middlewares/authMiddleware');
 
-/**
- * @route GET /dontu
- * @desc Lấy danh sách đơn từ.
- *       - HR: xem tất cả đơn của nhân viên.
- *       - Nhân viên: xem đơn của chính mình.
- * @access Private
- */
-router.get('/', verifyToken, (req, res) => {
-    if (req.user.role === 'HR') {
-        // HR xem tất cả đơn
-        return res.json(db.requests);
-    } else {
-        // Nhân viên xem đơn của mình
-        const myRequests = db.requests.filter(reqt => reqt.nhanVienId === req.user.nhanVienId);
-        return res.json(myRequests);
+const mapRequest = (row) => ({
+    id: row.id,
+    nhanVienId: row.nhan_vien_id,
+    loai: row.loai,
+    tuNgay: row.tu_ngay,
+    denNgay: row.den_ngay,
+    lyDo: row.ly_do,
+    trangThai: row.trang_thai
+});
+
+router.get('/', verifyToken, async (req, res) => {
+    try {
+        let sql = 'SELECT * FROM don_tu';
+        let params = [];
+        if (req.user.role !== 'HR') {
+            sql += ' WHERE nhan_vien_id = ?';
+            params.push(req.user.nhanVienId);
+        }
+        const [rows] = await db.execute(sql, params);
+        return res.json(rows.map(mapRequest));
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
     }
 });
 
-/**
- * @route POST /dontu
- * @desc Gửi đơn từ (nhân viên tạo đơn xin nghỉ phép, công tác)
- * @access Private (nhân viên thường)
- */
-router.post('/', verifyToken, (req, res) => {
-    // Chỉ cho phép nhân viên (EMP) tạo đơn, HR không tạo ở đây
-    if (req.user.role !== 'EMP') {
-        return res.status(403).json({ message: 'Chỉ nhân viên mới được tạo đơn' });
-    }
+router.post('/', verifyToken, async (req, res) => {
+    if (req.user.role !== 'EMP') return res.status(403).json({ message: 'Chỉ nhân viên tạo đơn' });
+
     const { loai, tuNgay, denNgay, lyDo } = req.body;
-    if (!loai || !tuNgay || !denNgay) {
-        return res.status(400).json({ message: 'Thiếu thông tin đơn (loại đơn, từ ngày, đến ngày)' });
+    try {
+        const sql = 'INSERT INTO don_tu (nhan_vien_id, loai, tu_ngay, den_ngay, ly_do, trang_thai) VALUES (?, ?, ?, ?, ?, ?)';
+        const [result] = await db.execute(sql, [req.user.nhanVienId, loai, tuNgay, denNgay, lyDo, 'Chờ duyệt']);
+
+        return res.status(201).json({ message: 'Đã gửi đơn', request: { id: result.insertId, ...req.body, trangThai: 'Chờ duyệt' } });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
     }
-    // Tạo đối tượng đơn từ mới
-    const newId = db.requests.length > 0 ? Math.max(...db.requests.map(r => r.id)) + 1 : 1;
-    const newRequest = {
-        id: newId,
-        nhanVienId: req.user.nhanVienId,
-        loai,
-        tuNgay,
-        denNgay,
-        lyDo,
-        trangThai: 'Chờ duyệt'
-    };
-    db.requests.push(newRequest);
-    db.saveData('dontu.json', db.requests);
-    return res.status(201).json({ message: 'Đã gửi đơn', request: newRequest });
 });
 
-/**
- * @route PUT /dontu/:id
- * @desc Duyệt hoặc cập nhật trạng thái đơn từ (HR duyệt đơn)
- * @access Private (HR)
- */
-router.put('/:id', verifyToken, requireHR, (req, res) => {
-    const reqId = parseInt(req.params.id);
-    const request = db.requests.find(r => r.id === reqId);
-    if (!request) {
-        return res.status(404).json({ message: 'Đơn không tồn tại' });
-    }
+router.put('/:id', verifyToken, requireHR, async (req, res) => {
     const { trangThai } = req.body;
-    if (!trangThai) {
-        return res.status(400).json({ message: 'Thiếu trạng thái mới' });
-    }
-    // Chỉ cho phép cập nhật thành "Đã duyệt" hoặc "Từ chối"
-    const allowed = ['Đã duyệt', 'Từ chối'];
-    if (!allowed.includes(trangThai)) {
+    if (!['Đã duyệt', 'Từ chối'].includes(trangThai)) {
         return res.status(400).json({ message: 'Trạng thái không hợp lệ' });
     }
-    // Cập nhật trạng thái
-    request.trangThai = trangThai;
-    db.saveData('dontu.json', db.requests);
-    return res.json({ message: 'Đã cập nhật trạng thái đơn', request });
+    try {
+        const [result] = await db.execute('UPDATE don_tu SET trang_thai = ? WHERE id = ?', [trangThai, req.params.id]);
+        if (result.affectedRows === 0) return res.status(404).json({ message: 'Không tìm thấy đơn' });
+        return res.json({ message: 'Đã cập nhật trạng thái' });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
 });
 
 module.exports = router;

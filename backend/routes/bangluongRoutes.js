@@ -1,119 +1,101 @@
-/* maychu/routes/bangluongRoutes.js */
 const express = require('express');
 const router = express.Router();
-const db = require('../data/db');
+const db = require('../config/db');
 const { verifyToken, requireHR } = require('../middlewares/authMiddleware');
 
-/**
- * @route GET /bangluong
- * @desc Lấy danh sách bảng lương. 
- *       - HR xem được tất cả.
- *       - Nhân viên thường chỉ xem lương của chính mình.
- * @access Private (đã đăng nhập)
- */
-router.get('/', verifyToken, (req, res) => {
-    if (req.user.role === 'HR') {
-        // HR xem tất cả bảng lương
-        return res.json(db.payrolls);
-    } else {
-        // Nhân viên chỉ xem các bản ghi lương của mình
-        const myPayrolls = db.payrolls.filter(p => p.nhanVienId === req.user.nhanVienId);
-        return res.json(myPayrolls);
+const mapPayroll = (row) => ({
+    id: row.id,
+    nhanVienId: row.nhan_vien_id,
+    hoTen: row.ho_ten,
+    thang: row.thang,
+    nam: row.nam,
+    luongCoBan: row.luong_co_ban,
+    phuCap: row.phu_cap,
+    thuong: row.thuong,
+    chuyenCan: row.chuyen_can === 1,
+});
+
+router.get('/', verifyToken, async (req, res) => {
+    try {
+        let sql = `
+            SELECT bl.*, nv.ho_ten 
+            FROM bang_luong bl
+            JOIN nhan_vien nv ON bl.nhan_vien_id = nv.id
+        `;
+        let params = [];
+
+        if (req.user.role !== 'HR') {
+            sql += ' WHERE bl.nhan_vien_id = ?';
+            params.push(req.user.nhanVienId);
+        }
+
+        const [rows] = await db.execute(sql, params);
+        return res.json(rows.map(mapPayroll));
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
     }
 });
 
-/**
- * @route GET /bangluong/:id
- * @desc Lấy thông tin một bản ghi bảng lương theo ID (phải đăng nhập)
- * @access Private
- */
-router.get('/:id', verifyToken, (req, res) => {
-    const payrollId = parseInt(req.params.id);
-    const payroll = db.payrolls.find(p => p.id === payrollId);
-    if (!payroll) {
-        return res.status(404).json({ message: 'Bảng lương không tồn tại' });
+router.get('/:id', verifyToken, async (req, res) => {
+    try {
+        const [rows] = await db.execute('SELECT * FROM bang_luong WHERE id = ?', [req.params.id]);
+        if (rows.length === 0) return res.status(404).json({ message: 'Không tìm thấy' });
+
+        const row = rows[0];
+        return res.json({
+            id: row.id,
+            nhanVienId: row.nhan_vien_id,
+            thang: row.thang,
+            nam: row.nam,
+            luongCoBan: row.luong_co_ban,
+            phuCap: row.phu_cap,
+            thuong: row.thuong,
+            chuyenCan: row.chuyen_can === 1
+        });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
     }
-    // Nếu người dùng không phải HR và cũng không phải chủ nhân của bảng lương này, chặn truy cập
-    if (req.user.role !== 'HR' && req.user.nhanVienId !== payroll.nhanVienId) {
-        return res.status(403).json({ message: 'Không được phép xem bảng lương này' });
-    }
-    return res.json(payroll);
 });
 
-/**
- * @route POST /bangluong
- * @desc Thêm bảng lương cho một nhân viên (HR)
- * @access Private (HR)
- */
-router.post('/', verifyToken, requireHR, (req, res) => {
-    const { nhanVienId, thang, nam, luong } = req.body;
-    if (!nhanVienId || !thang || !nam || luong == null) {
-        return res.status(400).json({ message: 'Thiếu thông tin bảng lương (nhân viên, tháng, năm, lương)' });
+router.post('/', verifyToken, requireHR, async (req, res) => {
+    const { nhanVienId, thang, nam, luongCoBan, phuCap, thuong, chuyenCan } = req.body;
+    try {
+        const [exist] = await db.execute(
+            'SELECT id FROM bang_luong WHERE nhan_vien_id = ? AND thang = ? AND nam = ?',
+            [nhanVienId, thang, nam]
+        );
+        if (exist.length > 0) return res.status(400).json({ message: 'Đã có bảng lương tháng này' });
+
+        await db.execute(
+            'INSERT INTO bang_luong (nhan_vien_id, thang, nam, luong_co_ban, phu_cap, thuong, chuyen_can) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [nhanVienId, thang, nam, luongCoBan || 0, phuCap || 0, thuong || 0, chuyenCan ? 1 : 0]
+        );
+        return res.status(201).json({ message: 'Đã thêm bảng lương' });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
     }
-    // Kiểm tra nhân viên có tồn tại không
-    const employee = db.employees.find(e => e.id === nhanVienId);
-    if (!employee) {
-        return res.status(400).json({ message: 'Nhân viên không tồn tại' });
-    }
-    // Kiểm tra trùng lặp (nếu đã có bảng lương tháng đó cho nhân viên này rồi)
-    const existed = db.payrolls.find(p => p.nhanVienId === nhanVienId && p.thang === thang && p.nam === nam);
-    if (existed) {
-        return res.status(400).json({ message: 'Đã tồn tại bảng lương của nhân viên này trong tháng/năm này' });
-    }
-    const newId = db.payrolls.length > 0 ? Math.max(...db.payrolls.map(p => p.id)) + 1 : 1;
-    const newPayroll = { id: newId, nhanVienId, thang, nam, luong };
-    db.payrolls.push(newPayroll);
-    db.saveData('bangluong.json', db.payrolls);
-    return res.status(201).json({ message: 'Đã thêm bảng lương', payroll: newPayroll });
 });
 
-/**
- * @route PUT /bangluong/:id
- * @desc Cập nhật thông tin bảng lương (HR)
- * @access Private (HR)
- */
-router.put('/:id', verifyToken, requireHR, (req, res) => {
-    const payrollId = parseInt(req.params.id);
-    const payroll = db.payrolls.find(p => p.id === payrollId);
-    if (!payroll) {
-        return res.status(404).json({ message: 'Bảng lương không tồn tại' });
+router.put('/:id', verifyToken, requireHR, async (req, res) => {
+    const { nhanVienId, thang, nam, luongCoBan, phuCap, thuong, chuyenCan } = req.body;
+    try {
+        await db.execute(
+            'UPDATE bang_luong SET nhan_vien_id=?, thang=?, nam=?, luong_co_ban=?, phu_cap=?, thuong=?, chuyen_can=? WHERE id=?',
+            [nhanVienId, thang, nam, luongCoBan, phuCap, thuong, chuyenCan ? 1 : 0, req.params.id]
+        );
+        return res.json({ message: 'Đã cập nhật bảng lương' });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
     }
-    const { nhanVienId, thang, nam, luong } = req.body;
-    if (!nhanVienId || !thang || !nam || luong == null) {
-        return res.status(400).json({ message: 'Thiếu thông tin bảng lương' });
-    }
-    const employee = db.employees.find(e => e.id === nhanVienId);
-    if (!employee) {
-        return res.status(400).json({ message: 'Nhân viên không tồn tại' });
-    }
-    // Kiểm tra trùng (trừ chính nó)
-    const existed = db.payrolls.find(p => p.id !== payrollId && p.nhanVienId === nhanVienId && p.thang === thang && p.nam === nam);
-    if (existed) {
-        return res.status(400).json({ message: 'Đã tồn tại bảng lương của nhân viên này trong tháng/năm này' });
-    }
-    // Cập nhật thông tin
-    payroll.nhanVienId = nhanVienId;
-    payroll.thang = thang;
-    payroll.nam = nam;
-    payroll.luong = luong;
-    db.saveData('bangluong.json', db.payrolls);
-    return res.json({ message: 'Đã cập nhật bảng lương', payroll });
 });
 
-/**
- * @route DELETE /bangluong/:id
- * @desc Xóa một bản ghi bảng lương (HR)
- * @access Private (HR)
- */
-router.delete('/:id', verifyToken, requireHR, (req, res) => {
-    const payrollId = parseInt(req.params.id);
-    const payroll = db.payrolls.find(p => p.id === payrollId);
-    if (!payroll) {
-        return res.status(404).json({ message: 'Bảng lương không tồn tại' });
+router.delete('/:id', verifyToken, requireHR, async (req, res) => {
+    try {
+        await db.execute('DELETE FROM bang_luong WHERE id = ?', [req.params.id]);
+        return res.json({ message: 'Đã xóa' });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
     }
-    db.payrolls = db.payrolls.filter(p => p.id !== payrollId);
-    db.saveData('bangluong.json', db.payrolls);
-    return res.json({ message: 'Đã xóa bảng lương' });
 });
 
 module.exports = router;

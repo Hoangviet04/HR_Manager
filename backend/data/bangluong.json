@@ -1,8 +1,0 @@
-[
-    { "id": 1, "nhanVienId": 1, "thang": 9, "nam": 2025, "luong": 5000000 },
-    { "id": 2, "nhanVienId": 1, "thang": 10, "nam": 2025, "luong": 5200000 },
-    { "id": 3, "nhanVienId": 2, "thang": 9, "nam": 2025, "luong": 6000000 },
-    { "id": 4, "nhanVienId": 2, "thang": 10, "nam": 2025, "luong": 6000000 },
-    { "id": 5, "nhanVienId": 3, "thang": 9, "nam": 2025, "luong": 10000000 },
-    { "id": 6, "nhanVienId": 3, "thang": 10, "nam": 2025, "luong": 11000000 }
-]

@@ -1,51 +1,32 @@
-/* maychu/middlewares/authMiddleware.js */
 const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
-// Khóa bí mật để ký JWT (nên lưu trong file .env bảo mật, ở đây đặt cứng để minh họa)
-const JWT_SECRET = 'mysecretkey';
+const JWT_SECRET = process.env.JWT_SECRET || 'secret_mac_dinh_cho_dev';
 
-/**
- * Middleware kiểm tra JWT trong header Authorization.
- * Nếu hợp lệ, giải mã token và gắn thông tin người dùng vào req.user.
- * Nếu không, trả về lỗi 401 (Unauthorized).
- */
-function verifyToken(req, res, next) {
-    // Lấy token từ header Authorization (định dạng "Bearer <token>")
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+const verifyToken = (req, res, next) => {
+    const tokenHeader = req.headers['authorization'];
+    const token = tokenHeader && tokenHeader.split(' ')[1];
     if (!token) {
-        // Không có token
-        return res.status(401).json({ message: 'Yêu cầu đăng nhập' });
+        return res.status(401).json({ message: 'Chưa đăng nhập (Thiếu Token)' });
     }
+
     try {
-        // Xác minh token và giải mã payload
         const decoded = jwt.verify(token, JWT_SECRET);
-        // Gắn thông tin người dùng vào request để dùng ở các middleware/route sau
         req.user = decoded;
         next();
-    } catch (err) {
-        // Token không hợp lệ hoặc hết hạn
-        return res.status(403).json({ message: 'Token không hợp lệ' });
+    } catch (error) {
+        return res.status(403).json({ message: 'Token không hợp lệ hoặc đã hết hạn' });
     }
-}
+};
 
-/**
- * Middleware kiểm tra vai trò HR.
- * Yêu cầu đã qua verifyToken trước đó (có req.user).
- * Nếu người dùng không phải HR, trả về 403 Forbidden.
- */
-function requireHR(req, res, next) {
+const requireHR = (req, res, next) => {
     if (!req.user) {
-        return res.status(401).json({ message: 'Chưa đăng nhập' });
+        return res.status(401).json({ message: 'Chưa xác thực người dùng' });
     }
     if (req.user.role !== 'HR') {
-        return res.status(403).json({ message: 'Không có quyền truy cập (cần quyền HR)' });
+        return res.status(403).json({ message: 'Bạn không có quyền thực hiện hành động này' });
     }
     next();
-}
-
-module.exports = {
-    verifyToken,
-    requireHR,
-    JWT_SECRET
 };
+
+module.exports = { verifyToken, requireHR, JWT_SECRET };

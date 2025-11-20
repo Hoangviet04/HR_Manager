@@ -1,98 +1,78 @@
-/* maychu/routes/phongbanRoutes.js */
 const express = require('express');
 const router = express.Router();
-const db = require('../data/db');
+const db = require('../config/db');
 const { verifyToken, requireHR } = require('../middlewares/authMiddleware');
 
-/**
- * @route GET /phongban
- * @desc Lấy danh sách phòng ban
- * @access Private (đăng nhập bất kỳ vai trò nào)
- */
-router.get('/', verifyToken, (req, res) => {
-    return res.json(db.departments);
-});
 
-/**
- * @route GET /phongban/:id
- * @desc Lấy thông tin một phòng ban theo ID
- * @access Private (đăng nhập)
- */
-router.get('/:id', verifyToken, (req, res) => {
-    const deptId = parseInt(req.params.id);
-    const department = db.departments.find(d => d.id === deptId);
-    if (!department) {
-        return res.status(404).json({ message: 'Phòng ban không tồn tại' });
+router.get('/', verifyToken, async (req, res) => {
+    try {
+        const [rows] = await db.execute('SELECT * FROM phong_ban');
+        const result = rows.map(row => ({ id: row.id, tenPhong: row.ten_phong }));
+        return res.json(result);
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
     }
-    return res.json(department);
 });
 
-/**
- * @route POST /phongban
- * @desc Thêm mới phòng ban
- * @access Private (HR)
- */
-router.post('/', verifyToken, requireHR, (req, res) => {
+router.get('/:id', verifyToken, async (req, res) => {
+    try {
+        const [rows] = await db.execute('SELECT * FROM phong_ban WHERE id = ?', [req.params.id]);
+        if (rows.length === 0) return res.status(404).json({ message: 'Phòng ban không tồn tại' });
+        return res.json({ id: rows[0].id, tenPhong: rows[0].ten_phong });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+});
+
+router.post('/', verifyToken, requireHR, async (req, res) => {
     const { tenPhong } = req.body;
-    if (!tenPhong) {
-        return res.status(400).json({ message: 'Tên phòng ban không được để trống' });
+    if (!tenPhong) return res.status(400).json({ message: 'Tên phòng ban trống' });
+
+    try {
+        const [exist] = await db.execute('SELECT id FROM phong_ban WHERE ten_phong = ?', [tenPhong]);
+        if (exist.length > 0) return res.status(400).json({ message: 'Tên phòng ban đã tồn tại' });
+
+        const [result] = await db.execute('INSERT INTO phong_ban (ten_phong) VALUES (?)', [tenPhong]);
+        return res.status(201).json({ message: 'Đã thêm', department: { id: result.insertId, tenPhong } });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
     }
-    // Kiểm tra trùng tên phòng ban
-    const existed = db.departments.find(d => d.tenPhong.toLowerCase() === tenPhong.toLowerCase());
-    if (existed) {
-        return res.status(400).json({ message: 'Tên phòng ban đã tồn tại' });
-    }
-    const newId = db.departments.length > 0 ? Math.max(...db.departments.map(d => d.id)) + 1 : 1;
-    const newDept = { id: newId, tenPhong };
-    db.departments.push(newDept);
-    db.saveData('phongban.json', db.departments);
-    return res.status(201).json({ message: 'Đã thêm phòng ban mới', department: newDept });
 });
 
-/**
- * @route PUT /phongban/:id
- * @desc Cập nhật thông tin phòng ban
- * @access Private (HR)
- */
-router.put('/:id', verifyToken, requireHR, (req, res) => {
-    const deptId = parseInt(req.params.id);
-    const department = db.departments.find(d => d.id === deptId);
-    if (!department) {
-        return res.status(404).json({ message: 'Phòng ban không tồn tại' });
-    }
+router.put('/:id', verifyToken, requireHR, async (req, res) => {
+    const deptId = req.params.id;
     const { tenPhong } = req.body;
-    if (!tenPhong) {
-        return res.status(400).json({ message: 'Tên phòng ban không được để trống' });
+    if (!tenPhong) return res.status(400).json({ message: 'Tên phòng ban trống' });
+
+    try {
+        const [check] = await db.execute('SELECT id FROM phong_ban WHERE id = ?', [deptId]);
+        if (check.length === 0) return res.status(404).json({ message: 'Phòng ban không tồn tại' });
+
+        const [exist] = await db.execute('SELECT id FROM phong_ban WHERE ten_phong = ? AND id != ?', [tenPhong, deptId]);
+        if (exist.length > 0) return res.status(400).json({ message: 'Tên phòng ban đã tồn tại' });
+
+        await db.execute('UPDATE phong_ban SET ten_phong = ? WHERE id = ?', [tenPhong, deptId]);
+        return res.json({ message: 'Đã cập nhật', department: { id: deptId, tenPhong } });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
     }
-    // Kiểm tra trùng tên (trừ chính nó)
-    const existed = db.departments.find(d => d.tenPhong.toLowerCase() === tenPhong.toLowerCase() && d.id !== deptId);
-    if (existed) {
-        return res.status(400).json({ message: 'Tên phòng ban đã tồn tại' });
-    }
-    department.tenPhong = tenPhong;
-    db.saveData('phongban.json', db.departments);
-    return res.json({ message: 'Đã cập nhật phòng ban', department });
 });
 
-/**
- * @route DELETE /phongban/:id
- * @desc Xóa một phòng ban
- * @access Private (HR)
- */
-router.delete('/:id', verifyToken, requireHR, (req, res) => {
-    const deptId = parseInt(req.params.id);
-    const department = db.departments.find(d => d.id === deptId);
-    if (!department) {
-        return res.status(404).json({ message: 'Phòng ban không tồn tại' });
+router.delete('/:id', verifyToken, requireHR, async (req, res) => {
+    const deptId = req.params.id;
+    try {
+        const [hasEmp] = await db.execute('SELECT count(*) as count FROM nhan_vien WHERE phong_ban_id = ?', [deptId]);
+        if (hasEmp[0].count > 0) {
+            return res.status(400).json({ message: 'Không thể xóa vì còn nhân viên trong phòng' });
+        }
+
+        const [result] = await db.execute('DELETE FROM phong_ban WHERE id = ?', [deptId]);
+        if (result.affectedRows === 0) return res.status(404).json({ message: 'Phòng ban không tồn tại' });
+
+        return res.json({ message: 'Đã xóa phòng ban' });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
     }
-    // Không cho xóa nếu còn nhân viên thuộc phòng ban này
-    const hasEmployees = db.employees.some(e => e.phongBanId === deptId);
-    if (hasEmployees) {
-        return res.status(400).json({ message: 'Không thể xóa phòng ban vì còn nhân viên thuộc phòng ban này' });
-    }
-    db.departments = db.departments.filter(d => d.id !== deptId);
-    db.saveData('phongban.json', db.departments);
-    return res.json({ message: 'Đã xóa phòng ban' });
 });
 
 module.exports = router;
