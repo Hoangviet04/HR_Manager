@@ -1,165 +1,122 @@
-Dự án Quản Lý Nhân Sự (HR Management System)
-🧠 Giới thiệu dự án
+# 🏢 HR Manager - Hệ thống Quản lý Nhân sự
 
-Tên đề tài: Xây dựng phần mềm quản lý nhân sự (Human Resource Management System – HRM)
-Trường: Trường Đại học Phenikaa
-Giảng viên hướng dẫn: TS. Vũ Quang Dũng
-Nhóm thực hiện:
-Đinh Hoàng Việt – 22010354
-Đặng Tuấn Cảnh – 22010374
-Chu Công Vinh – 22010358
-Vũ Danh - 
+![Node.js](https://img.shields.io/badge/Node.js-v14%2B-green)
+![React](https://img.shields.io/badge/React-v18-blue)
+![MySQL](https://img.shields.io/badge/MySQL-8.0-orange)
 
-🎯 Mục tiêu dự án
+Đây là dự án Fullstack Web Application giúp doanh nghiệp quản lý nhân sự, chấm công, tính lương và báo cáo một cách hiệu quả. Hệ thống phân quyền rõ ràng giữa Quản trị viên và Nhân viên .
 
-Hệ thống HRM được xây dựng nhằm:
+## 👥 Đội ngũ phát triển
 
-Tự động hóa nghiệp vụ nhân sự: quản lý hồ sơ nhân viên, hợp đồng, chấm công, tính lương, duyệt đơn từ.
+Dự án này được xây dựng và phát triển bởi nhóm sinh viên:
 
-Cung cấp giao diện trực quan: giúp HR dễ thao tác, nhân viên dễ tra cứu thông tin.
+| STT | Họ và tên |MSSV|
+|:---:|:---|:---|
+| 1 | **Đinh Hoàng Việt** | 22010354 |
+| 2 | **Chu Công Vinh** | 22010358 |
+| 3 | **Đặng Tuấn Cảnh** | 22010374 |
+| 4 | **Lê Vũ Danh** | 22014522 |
 
-Xuất báo cáo chính xác: về nhân sự, chấm công và lương theo phòng ban hoặc toàn công ty.
+**Giảng viên hướng dẫn: ThS. Vũ Quang Dũng**
 
-Bảo mật và toàn vẹn dữ liệu, hỗ trợ phân quyền rõ ràng giữa HR Manager và nhân viên.
+## 🌟 Tính năng nổi bật
 
-🧩 Chức năng chính
-🔹 Phân hệ Quản lý (HR Manager)
+### 👨‍💼 Dành cho Quản trị viên (HR)
+* **Quản lý Nhân viên:** Thêm, sửa, xóa, tìm kiếm, lọc theo phòng ban/giới tính.
+* **Quản lý Phòng ban:** Thêm mới, cập nhật danh sách phòng ban.
+* **Tính lương tự động:** * Tự động load mức lương cơ bản.
+    * Tính toán phụ cấp, thưởng chuyên cần, khấu trừ BHXH (8%) và thực lĩnh.
+    * Xuất bảng lương ra **Excel** và **PDF**.
+* **Quản lý Đơn từ:** Duyệt hoặc từ chối đơn xin nghỉ phép/công tác.
+* **Báo cáo & Thống kê:**
+    * Dashboard trực quan với biểu đồ (Recharts).
+    * Báo cáo tổng hợp theo tháng (Biến động nhân sự, tổng chi lương).
+    * Xuất báo cáo tổng hợp ra file.
 
-Quản lý hồ sơ nhân viên (thêm, sửa, xóa, tra cứu)
+### 👩‍💻 Dành cho Nhân viên (Employee)
+* **Chấm công:** Check-in / Check-out hàng ngày.
+* **Xem lịch sử:** Theo dõi lịch sử đi làm, trạng thái đi muộn/về sớm.
+* **Đơn từ:** Tạo đơn xin nghỉ phép, công tác và theo dõi trạng thái duyệt.
+* **Bảng lương:** Xem chi tiết phiếu lương cá nhân và in phiếu lương (PDF).
+* **Cá nhân:** Đổi mật khẩu, xem thông tin hồ sơ cá nhân.
+* **Giới thiệu:** Xem thông tin về đội ngũ phát triển dự án.
 
-Quản lý chấm công và ca làm
+## 🛠️ Công nghệ sử dụng
 
-Tính lương tự động
+### Backend
+* **Node.js & Express:** Xây dựng RESTful API.
+* **MySQL:** Cơ sở dữ liệu quan hệ.
+* **JWT (JsonWebToken):** Xác thực và phân quyền bảo mật.
+* **Bcrypt:** Mã hóa mật khẩu.
 
-Duyệt/từ chối đơn từ (nghỉ phép, làm thêm giờ, công tác)
+### Frontend
+* **ReactJS:** Thư viện UI Component.
+* **Material UI (MUI):** Giao diện hiện đại, chuẩn UX.
+* **Axios:** Kết nối API.
+* **Recharts:** Vẽ biểu đồ thống kê.
+* **XLSX & jsPDF:** Xử lý xuất file báo cáo, bảng lương.
 
-Xuất báo cáo tổng hợp (Excel/PDF)
+---
 
-🔹 Phân hệ Nhân viên
+## 🚀 Hướng dẫn cài đặt
 
-Xem và cập nhật hồ sơ cá nhân
+Làm theo các bước sau để chạy dự án trên máy local:
 
-Gửi đơn xin nghỉ phép / làm thêm giờ / công tác
+### 1. Clone dự án
+```bash
+git clone https://github.com/Hoangviet04/HR_Manager.git
+```
 
-Tra cứu bảng lương và lịch làm việc
+### 2. Cài đặt Cơ sở dữ liệu (Database)
+1. Mở MySQL Workbench hoặc phpMyAdmin.
+2. Tạo database mới tên là `quanlynhansu`.
+3. Import file `database/quanlynhansu.sql` vào database vừa tạo.
 
-Nhận thông báo duyệt/từ chối từ HR
-
-⚙️ Kiến trúc hệ thống
-
-Ứng dụng được thiết kế theo mô hình Client – Server gồm 3 tầng:
-
-Frontend (Client):
-
-Dự kiến sử dụng ReactJS hoặc VueJS.
-
-Cung cấp giao diện cho HR và nhân viên truy cập qua trình duyệt.
-
-Backend (Server):
-
-Sử dụng Node.js (Express) hoặc Python (Django/FastAPI).
-
-Cung cấp API RESTful cho Frontend.
-
-Xử lý nghiệp vụ: quản lý hồ sơ, tính lương, duyệt đơn, sinh báo cáo.
-
-Database:
-
-Dùng MySQL hoặc PostgreSQL.
-
-Lưu trữ tập trung dữ liệu nhân viên, chấm công, bảng lương, đơn từ.
-
-🧱 Mô hình cơ sở dữ liệu (tóm tắt)
-
-NhanVien ↔ PhongBan: N–1
-
-NhanVien ↔ ChucVu: N–1
-
-NhanVien ↔ HopDong: 1–N
-
-NhanVien ↔ ChamCong: 1–N
-
-NhanVien ↔ BangLuong: 1–N
-
-🖥️ Hướng dẫn cài đặt
-📌 Yêu cầu môi trường
-
-Node.js >= 18
-
-npm hoặc yarn
-
-MySQL >= 8
-
-Git
-
-🔧 Cách cài đặt và chạy
-
-Giải nén file dự án
-
-quanlynhansu.rar → ./quanlynhansu/
-
-
-Cài đặt dependencies
-
+### 3. Cài đặt Backend
+```bash
 cd backend
 npm install
-
-
-Cấu hình file .env (trong thư mục backend)
-
+```
+Tạo file .env trong thư mục backend và cấu hình:
+```Đoạn mã
 PORT=5000
 DB_HOST=localhost
 DB_USER=root
-DB_PASS=your_password
-DB_NAME=quanlynhansu
-JWT_SECRET=secret_key
+DB_PASSWORD=mat_khau_mysql_cua_ban
+DB_NAME=quan_ly_nhan_su
+JWT_SECRET=chuoi_bi_mat_cua_ban
+```
 
+Chạy server:
+Bash
+```
+node server.js
+```
 
-Khởi tạo cơ sở dữ liệu
+* Hoặc nếu dùng nodemon: npm run dev
 
-npx sequelize db:create
-npx sequelize db:migrate
+Server sẽ chạy tại: http://localhost:5000
 
-
-Chạy backend
-
-npm start
-
-
-Mặc định tại: http://localhost:5000
-
-Chạy frontend
-
+### 4. Cài đặt Frontend
+Mở một terminal mới:
+```bash
 cd frontend
 npm install
 npm start
+```
+Trang web sẽ tự động mở tại: http://localhost:3000
+
+---
+
+## 🔐 Tài khoản Demo
+
+Sử dụng các tài khoản sau để trải nghiệm hệ thống:
+
+| Vai trò | Username | Password |
+| :--- | :--- | :--- |
+| **Quản trị (HR)** | `admin` | `123456` |
+| **Nhân viên (EMP)** | `nhanvien` | `123456` |
+
+---
 
 
-Mặc định tại: http://localhost:3000
-
-📊 Hướng dẫn sử dụng
-
-Truy cập giao diện web.
-
-Đăng nhập:
-
-HR Manager (Admin): có toàn quyền quản lý
-
-Nhân viên: chỉ xem và gửi đơn
-
-Các chức năng chính nằm ở menu bên trái:
-
-“Quản lý nhân viên”, “Chấm công”, “Tính lương”, “Đơn từ”, “Báo cáo”.
-
-🚀 Hướng phát triển tương lai
-
-Thêm module tuyển dụng và đào tạo.
-
-Tích hợp thiết bị chấm công vân tay hoặc QR code.
-
-Phát triển ứng dụng di động (React Native / Flutter).
-
-Kết nối API với hệ thống ERP hoặc kế toán.
-NhanVien ↔ DonTu: 1–N
-
-NguoiDung ↔ NhanVien: 1–1
